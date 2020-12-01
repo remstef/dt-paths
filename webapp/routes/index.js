@@ -55,7 +55,7 @@ router.get('/path', (req, res, next) => {
       distance: _.path.map(u => _.costs[u]),
       subgraph: Object.keys(_.parents).length
     }))
-    .catch(_ => Exception.handleErrorResponse(_, res))
+    .catch(_ => Exception.handleErrorResponse(_, res).end(next))
 
 });
 
