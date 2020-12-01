@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+<html lang='en'>
+<head>
+  <title>a-sent-vis: Annotated Sentence Visualizer</title>
+  <link rel='icon' href='img/favicon.ico' type='image/x-icon'/>
+  <link rel='stylesheet' href='lib/bootstrap-4.0.0/css/bootstrap.min.css'>
+  <style type='text/css'>
+    /* define some style */
+    body {
+      font-family: Verdana, Helvetica, sans-serif;
+      font-size: 12px;
+      padding: 0;
+      margin: 10px;
+      background-color: white;
+      color: #222;
+    }
+    /* page title */
+    #titlecontainer {
+      width: auto;
+      color: #6494ED;
+      text-align: center;
+      font-size: 16px;
+    }
+    /* Main content div */
+    #maincontainer{
+      margin-left: 50px;
+      margin-right: 50px;
+      margin-top: 20px;
+      width: auto;
+      background-color: white;
+    }
+    #sentenceinput{
+      margin-bottom: 20px;
+      margin-top: 20px;
+    }
+    #loadercontainer{
+      width: 50px;
+      margin: auto;
+      margin-top: 20px;
+    }
+    #helpcontainer{
+      width: 300px;
+      margin: auto;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .result {
+      margin-top: 5px;
+      margin-right: 20px;
+    }
+    .hangindent {
+      text-indent: -22px;
+      padding-left: 22px;
+      margin-left: 20px; 
+      margin-right: 20px;
+    }
+    #resultcontainer{
+      margin-top: 30px;
+    }
+  </style>
+</head>
+
+<body>
+<div id='titlecontainer'><span>DT Paths</span></div>
+<!-- Help Modal -->
+<div class='modal fade' id='helpModal' tabindex='-1' role='dialog' aria-labelledby='helpModalLabel' aria-hidden='true'>
+  <div class='modal-dialog modal-lg' role='document'>
+    <div class='modal-content'>
+      <div class='modal-header'>
+        <h5 class='modal-title' id='helpModalLabel'>Help</h5>
+        <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
+          <span aria-hidden='true'>&times;</span>
+        </button>
+      </div>
+      <div class='modal-body'>
+        <!-- BEGIN: modal content -->
+        <h6>Description:</h6>
+        <p style='margin-left: 20px; margin-right:20px;' align='justify'>
+          Here comes some description at some point
+        </p>
+
+        <h6>About:</h6>
+        <p style='margin-left: 20px; margin-right:20px; margin-bottom: 8px;'>
+          This website was built using:
+        </p>
+        <div style='margin-left: 20px; margin-right:20px;'>
+          <ul>
+            <li>
+              <a href='https://jquery.com/'>jQuery</a>
+            </li>
+            <li>
+              <a href='https://getbootstrap.com/'>Bootstrap</a>
+            </li>
+          </ul>
+        </div>
+        <p style='margin-right:20px;'>
+          *Created by <a href='https://github.com/remstef'>@remstef</a> (<a href='https://github.com/remstef/dt-paths'>source</a>) and published under <a href='https://www.apache.org/licenses/LICENSE-2.0.html'>APLv2</a>.
+        </p>
+        <!-- END: modal content -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id='loadercontainer'>
+  <img id='loaderimage' src='img/noload.svg' height='50px'>
+</div>
+
+<div id='maincontainer'>
+  <div id='visualizecontainer' class='visualizecontainer'>
+    <form method='GET' id='visualizeForm'>
+      <div id='helpcontainer'>
+        <a href='' data-toggle='modal' data-target='#helpModal'>Show Help</a><br />
+        <a href='?q=jaguar%23NN'>Show Example</a><br />
+        <a href='./swagger'>API</a><br />
+      </div>  
+      <input type='text'
+        class='form-control'
+        id='queryinput'
+        name='q'
+        placeholder='&lt;Enter a query&gt; e.g. jaguar#NN'
+      />
+    </form>
+  </div>
+
+  <div id='resultcontainer' class='resultcontainer'>
+    <div id='query' class='query'></div>
+  </div>
+
+  <div id='live-edit-container' style='display: none; margin-top: 1cm;'>
+    <textarea id='coll-input' style='display:block;float:left;width:40%;height:400px;font-size:11px;border:2px inset' placeholder='Enter JSON for the collection object here...'></textarea>
+    <textarea id='doc-input' style='display:block;float:right;width:55%;height:400px;font-size:11px;border:2px inset' placeholder='Enter JSON for the document object here...'></textarea>  
+  </div>
+
+</div>
+
+<!-- the magic starts here -->
+<script type='text/javascript' src='lib/jquery-3.5.0/jquery.min.js'></script>
+<script type='text/javascript' src='lib/bootstrap-4.0.0/js/bootstrap.min.js'></script>
+<script type='text/javascript' src='js/dtpaths-embed.js'></script>
+<script type='text/javascript'>
+
+  const embedelem = 'query-result';
+  let element_x_is_hidden = false;
+  
+  function show_hide_element_x() {
+    element_x_is_hidden = !show_hide_element($('#div-container-id'));
+  }
+
+  function show_hide_element(elem){
+    if(elem.css('display') === 'block') {
+      elem.css('display', 'none');
+      return false;
+    }
+    else {
+      elem.css('display', 'block');
+      return true;
+    }
+  }
+
+  function switchloader(load){
+    if(load){
+      $('#loaderimage').attr('src', 'img/load.svg');
+      return;
+    }
+    $('#loaderimage').attr('src', 'img/noload.svg');
+  }
+
+  // BEGIN: public static main void
+  $(document).ready(function(){
+    // define process function, which prepares and fills the result container
+    const process = function(query) { 
+      // start loading
+      switchloader(true);
+      // prepare the new url
+      const url = '?q=' + encodeURIComponent(query);
+      $('#resultcontainer').append(`
+        <div class='result' id='query-interpreted'><p>
+          <a href='${url}'>${query}</a>
+          <br /><br />
+          <a href='#' onclick='show_hide_element_x();'>Toggle X</a>
+        </p></div>`);
+      $('#resultcontainer').append(`<div class='result' id='${embedelem}'></div>`);
+      const callback = function(dispatcher, collData, docData){
+        /* do make some api calls and load the data */
+        switchloader(false);
+      };
+      console.log(`Processing query '${query}'...`);
+      run_query(query, embedelem, callback);
+    }
+
+    // check the URL for query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const query = (urlParams.has('q') ? urlParams.get('q') : '').trim()
+    if(query){
+      // fill the input box
+      $('#queryinput').val(query);
+      // process the sentence
+      process(query);
+    }
+
+  }); 
+  // END: public static main void
+</script>
+
+</body>
+</html>
+
+

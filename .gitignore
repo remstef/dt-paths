@@ -1,3 +1,7 @@
+# VS Code
+.vscode
+dt-paths.code-workspace
+
 # Logs
 logs
 *.log

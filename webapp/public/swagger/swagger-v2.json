@@ -1,0 +1,91 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "DT Paths API.",
+    "version": "0.0.1",
+    "title": "DT Paths",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "basePath": "/api",
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/sim": {
+      "get": {
+        "summary": "Query DT",
+        "description": "Query DT.",
+        "operationId": "sim",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "The search query item.",
+            "required": true,
+            "default": "Jaguar#NN",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "400": {
+            "description": "Error"
+          }
+        }
+      }
+    },
+    "/path": {
+      "get": {
+        "summary": "Get path within DT.",
+        "description": "Get path within DT.",
+        "operationId": "path",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "description": "The start query item.",
+            "required": true,
+            "type": "string",
+            "default": "Jaguar#NN"
+          },
+          {
+            "name": "dest",
+            "in": "query",
+            "description": "The destination query item.",
+            "required": true,
+            "type": "string",
+            "default": "tiger#NN"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "type": "object"
+            }
+          },
+          "400": {
+            "description": "Error"
+          }
+        }
+      }
+    }
+  }
+}
