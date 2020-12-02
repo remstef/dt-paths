@@ -12,6 +12,13 @@ const router = express.Router();
 
 /* set up routes */
 
+// show available DTs
+router.get('/dt', (req, res, next) => {
+  db.get_dbs()
+    .then(_ => res.json(_))
+    .catch(_ => Exception.handleErrorResponse(_, res).end(next))
+});
+
 // get similar items
 router.get('/sim', (req, res, next) => {
   
@@ -43,6 +50,7 @@ router.get('/sim', (req, res, next) => {
 
 });
 
+// get path between start and dest
 router.get('/path', (req, res, next) => {
   
   var start = 'start' in req.query ? req.query.start : 'unknown#NN';

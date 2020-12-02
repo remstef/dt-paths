@@ -14,6 +14,31 @@
     "http"
   ],
   "paths": {
+    "/dt": {
+      "get": {
+        "summary": "Show DTs",
+        "description": "Show DTs.",
+        "operationId": "dt",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [ ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "400": {
+            "description": "Error"
+          }
+        }
+      }
+    },
     "/sim": {
       "get": {
         "summary": "Query DT",

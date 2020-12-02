@@ -10,31 +10,51 @@ const
 /* connection string: mysql://user:pass@host:port/database?optionkey=optionvalue&optionkey=optionvalue&... */
 // 'mysql://root:root@host.docker.internal:13306/DT_CC_depnemwe?debug=false&connectionLimit=150&multipleStatements=true';
 const connectionStrings = process.env.MYSQL_CONNECTIONSTRINGS || 'name=mysql://user:pass@host:port/database?optionkey=optionvalue&optionkey=optionvalue&...';
-const pools = {}
 
-connectionStrings.split(/\s+/).filter(s => s).map(s => { 
-  const x = s.split('='); 
-  const name = x[0], connectionString = x.slice(1).join('='); 
-  logger.info(`Trying to create pool '${name}': '${connectionString}'.`);
-  const pool = mysql.createPool(connectionString);
-  logger.info(`Using '${name}' with ${pool.config.connectionLimit} connections.`);
-  pools[name] = pool;
-})
+const poolname2id = { };
+let pools = [ ];
+
+// init pools
+(function(){
+  pools = connectionStrings.split(/\s+/).filter(s => s).map((s, i) => { 
+    const x = s.split('='); 
+    const name = x[0], connectionString = x.slice(1).join('='); 
+    logger.info(`Trying to create pool '${name}': '${connectionString}'.`);
+    const poolinstance = mysql.createPool(connectionString);
+    logger.info(`Initialized '${name}' with ${poolinstance.config.connectionLimit} connections.`);
+    poolname2id[name] = i
+    return {
+      name: name,
+      instance: poolinstance,
+      id: i,
+      available: false
+    }
+  });
+  testpools();
+})();
+
+// test availability / init
+function testpools() {
+  pools.forEach(async p => {
+    p.available = await testconnection(p.name);
+  });
+}
+
 
 /*
  * Some Helper Functions
  */
-function withConnection(callback, name=null) {
-  const poolname =  (!name || !(name in pools)) ? Object.keys(pools)[0] : name;
+async function withConnection(callback, name=null) {
+  const poolname =  (!name || !(name in poolname2id)) ? Object.keys(poolname2id)[0] : name;
   logger.trace(`Using '${poolname}' ('${name}') connection.`);
-  pools[poolname].getConnection(function (err, connection) {
+  pools[poolname2id[poolname]].instance.getConnection(function (err, connection) {
     if (err)
-      return callback(Exception.fromError(err, `Could not establish connection to database '${name}'.`), null);
+      return callback(Exception.fromError(err, `Could not establish connection to database '${poolname}'.`), null);
     callback(null, connection);
   });
 }
 
-function promisedQuery_sync(query, values) {
+async function promisedQuery_sync(query, values, poolname=null) {
   return new Promise((resolve, reject) => {
       withConnection(function (err, connection) {
         if (err)
@@ -55,11 +75,11 @@ function promisedQuery_sync(query, values) {
           connection.release();
           return true;
         });
-      });
+      }, poolname);
   });
 }
 
-function query_async(query, values, cberr, cbfields, cbitem, cbend, force_item_pause) {
+async function query_async(query, values, cberr, cbfields, cbitem, cbend, force_item_pause, poolname=null) {
   withConnection(function (err, connection) {
     if (err)
       return cberr(err);
@@ -78,10 +98,10 @@ function query_async(query, values, cberr, cbfields, cbitem, cbend, force_item_p
       .on('end', function() {
         cbend(() => connection.release());
       });
-  });  
+  }, poolname);  
 }
 
-function promisedQuery_async(query, values, cbfields, cbitem, force_item_pause) {
+async function promisedQuery_async(query, values, cbfields, cbitem, force_item_pause, poolname=null) {
   return new Promise((resolve, reject) => {
     query_async(
       query,
@@ -90,28 +110,35 @@ function promisedQuery_async(query, values, cbfields, cbitem, force_item_pause) 
       cbfields,
       cbitem,
       resolve,
-      force_item_pause
+      force_item_pause,
+      poolname
     );
   });
 }
 
-// init
-(async function() {
-  return promisedQuery_sync('select 1;')
+async function testconnection(poolname) {
+  return await new Promise((resolve, reject) => {
+    promisedQuery_sync('select 1;', [], poolname=poolname)
     .catch(err => {
-      logger.error('Service initialization failed.');
+      logger.error(`Service connection ${poolname} failed.`);
       logger.error(err);
-      process.exit(1);
+      return resolve(false);
     })
     .then(res => {
-      if(res.rows[0][1] != 1)
-        logger.warn(`'SELECT 1;' is '${res}' but should be '1'.`);    
+      if(!res)
+        return res;
+      if(res.rows[0][1] != 1){
+        logger.warn(`Connection ${poolname} might be faulty, 'SELECT 1;' is '${res}' but should be '1'. Integrity cannot be guaranteed.`); 
+        return resolve(false);
+      }
+      return resolve(true);
     });
-})();
+  });
+}
 
 function close(callback) {
-  Object.entries(pools).forEach(kvp => {
-    const name = kvp[0], pool = kvp[1];
+  pools.forEach(e => {
+    const name = e.name, pool = e.instance;
     pool.end(function (err) {
       if (err) {
         logger.warn(`Closing mysql pool '${name}' failed.`, err);
@@ -136,6 +163,12 @@ nodeCleanup(function (exitCode, signal) {
  * Exports
  * 
  * * * */
+
+module.exports.get_dbs = async function() {
+  return Promise
+    .resolve(testpools())
+    .then(_ => pools.map( p => Object({name: p.name, available: p.available})));
+}
 
 module.exports.get_results_sync = async function (query, itemcallback) {
   return promisedQuery_sync('select word2 from LMI_1000_l200 where word1 = ? limit 10;', [query])
