@@ -22,21 +22,26 @@ router.get('/dt', (req, res, next) => {
 // get similar items
 router.get('/sim', (req, res, next) => {
   
-  var query = 'q' in req.query ? req.query.q : 'unknown#NN';
+  const query = 'q' in req.query ? req.query.q : 'unknown#NN';
+  const limit = 'limit' in req.query ? parseInt(req.query.limit) : undefined;
+  const offset = 'offset' in req.query ? parseInt(req.query.offset) : undefined;
+
   let startedwriting = false;
   Promise.resolve(true)
     .then(_ => {
       res.header('Content-Type', 'application/json; charset=utf-8');
       res.write('[');
     })
-    .then(_ => db.get_results_async(
+    .then(_ => db.get_neighbors_async (
       query,
       item => {
         if (startedwriting)
           res.write(',');
         res.write(JSON.stringify(item));
         startedwriting = true;
-      }
+      },
+      offset,
+      limit
     ))
     .then(ack => {
       res.end(']', next);
@@ -55,9 +60,10 @@ router.get('/path', (req, res, next) => {
   
   var start = 'start' in req.query ? req.query.start : 'unknown#NN';
   var dest = 'dest' in req.query ? req.query.dest : 'unknown#NN';
-
+  var topk = ('topk' in req.query ? parseInt(req.query.topk) : 200) + 1;
+  
   Promise.resolve(true)
-    .then(_ => paths.dijkstra(start, dest, db.get_neighbors_sync) )
+    .then(_ => paths.dijkstra(start, dest, node => db.get_neighbors_sync(node, 1, topk) ))
     .then(_ => res.json({
       path: _.path,
       distance: _.path.map(u => _.costs[u]),

@@ -188,20 +188,20 @@ module.exports.get_results_async = async function (query, itemcallback) {
 };
 
 // use r.name, r.weight, r.rank
-module.exports.get_neighbors_async = async function (query, itemcallback) {
+module.exports.get_neighbors_async = async function (query, itemcallback, offset=1, limit=200) {
   return promisedQuery_async(
-    'select t.word2 as name, t.count as weight, (@i:=@i+1) as rank from LMI_1000_l200 as t, (select @i:=0) as _ where t.word1 = ? limit 200 offset 1', // 18446744073709551610
-    [ query ],
+    'select t.word2 as name, t.count as weight, (@i:=@i+1)+? as rank from LMI_1000_l200 as t, (select @i:=0) as _ where t.word1 = ? limit ? offset ?', // 18446744073709551610
+    [  offset, query, limit, offset ],
     /* cbfields */ _ => { },
     /* cbitem   */ (r, ack) => { itemcallback(r), ack(); },
     /* force_item_pause/*/ false, /* true or false check if needed */
   )
 };
 
-module.exports.get_neighbors_sync = async function (query) {
+module.exports.get_neighbors_sync = async function (query, offset=1, limit=200) {
   return promisedQuery_sync(
-    'select t.word2 as name, t.count as weight, (@i:=@i+1) as rank from LMI_1000_l200 as t, (select @i:=0) as _ where t.word1 = ? limit 200 offset 1', // 18446744073709551610
-    [ query ]
+    'select t.word2 as name, t.count as weight, (@i:=@i+1)+? as rank from LMI_1000_l200 as t, (select @i:=0) as _ where t.word1 = ? limit ? offset ?', // 18446744073709551610
+    [ offset, query, limit, offset ]
   ).then(res => res.rows);
 };
 

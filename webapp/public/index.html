@@ -114,6 +114,7 @@
         <a href='' data-toggle='modal' data-target='#helpModal'>Show Help</a><br />
         <a href='?q=jaguar%23NN'>Show Example</a><br />
         <a href='./swagger'>API</a><br />
+        <a href='./explorer/?q=Jaguar%23NN'>DT Explorer</a><br />
       </div>  
       <input type='text'
         class='form-control'
@@ -178,6 +179,8 @@
       $('#resultcontainer').append(`
         <div class='result' id='query-interpreted'><p>
           <a href='${url}'>${query}</a>
+          <br /><br />
+          <a href='./explorer/${url}'>Explore ${query}</a>
           <br /><br />
           <a href='#' onclick='show_hide_element_x();'>Toggle X</a>
         </p></div>`);
