@@ -51,6 +51,8 @@ router.get('/sim', (req, res, next) => {
       res.end(']', next);
     })
     .catch(err => {
+      if (startedwriting)
+        res.write(',');
       logger.error(err);
       res.write(JSON.stringify(`Could not retrieve result: '${err.message}'`));
       res.end(']', next);
@@ -123,6 +125,8 @@ router.get('/pathp', (req, res, next) => {
     })
     .catch(err => {
       logger.error(err);
+      if (startedwriting)
+        res.write(',\n');
       res.write(JSON.stringify(`Could not retrieve result: '${err.message}'`));
       res.end(']\n', next);
     })
