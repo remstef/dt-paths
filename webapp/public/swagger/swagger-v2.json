@@ -172,6 +172,64 @@
           }
         }
       }
+    },
+    "/pathp": {
+      "get": {
+        "summary": "Get path within DT.",
+        "description": "Get path within DT.",
+        "operationId": "path",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "description": "The start query item.",
+            "required": true,
+            "type": "string",
+            "default": "Jaguar#NN"
+          },
+          {
+            "name": "dest",
+            "in": "query",
+            "description": "The destination query item.",
+            "required": true,
+            "type": "string",
+            "default": "tiger#NN"
+          },
+          {
+            "name": "topk",
+            "in": "query",
+            "description": "The number of neighbors to generate.",
+            "required": false,
+            "default": 200,
+            "type": "integer"
+          },
+          {
+            "name": "dt",
+            "in": "query",
+            "description": "The DT to use.",
+            "required": true,
+            "default": "default",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "type": "array",
+              "items":{
+                "type": "object"
+              }
+            }
+          },
+          "400": {
+            "description": "Error"
+          }
+        }
+      }
     }
   }
 }

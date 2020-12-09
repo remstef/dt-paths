@@ -21,7 +21,7 @@ function lowestCostNode(costs, processed) {
     }, null);
 }
 
-module.exports.dijkstra = async function(start, dest, neighbors) {
+module.exports.dijkstra = async function(start, dest, neighbors, callback) {
   const costs = { };
   const minhops = { };
   const pq = new goog.structs.PriorityQueue();
@@ -51,10 +51,10 @@ module.exports.dijkstra = async function(start, dest, neighbors) {
       node = pq.dequeue();
       continue;
     }
-      
-
     const cost = costs[node];
-    logger.debug(`processing '${node}' (${cost}).`);
+    
+    callback(node, cost)
+    
     const hops = minhops[node];
     const newhops = hops+1;
     // update costs

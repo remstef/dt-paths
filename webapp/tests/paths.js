@@ -22,7 +22,7 @@ async function test() {
   await dt_db.get_dt(null)
     .then(dt => {
       console.time('path')
-      return paths.dijkstra('Jaguar#NN', 'bank#NN', node => dt_db.get_neighbors_sync(node, 1, 200, dt))
+      return paths.dijkstra('cheese#NN', 'cake#NN', node => dt_db.get_neighbors_sync(node, 1, 200, dt), (node, cost) => logger.debug(`processing '${node}' (${cost}).`) ) 
     })
     .then(
       r => {
@@ -32,7 +32,7 @@ async function test() {
       err => console.error(err)
     )
     .then(_ => console.timeEnd('path'))
-    
+
   dt_db.close();
 }
 

@@ -67,14 +67,64 @@ router.get('/path', (req, res, next) => {
   const dtname = 'dt' in req.query ? req.query.dt : 'unspecified';
   
   dt_db.get_dt(dtname)
-    .then(dt => paths.dijkstra(start, dest, node => dt_db.get_neighbors_sync(node, 1, topk, dt) ))
+    .then(dt => paths.dijkstra(
+      start, 
+      dest, 
+      node => dt_db.get_neighbors_sync(node, 1, topk, dt), 
+      (node, cost) => {
+        logger.debug(`processing '${node}' (${cost}).`)
+      })
+    )
     .then(_ => res.json({
       path: _.path,
       distance: _.path.map(u => _.costs[u]),
       subgraph: Object.keys(_.parents).length
     }))
     .catch(_ => Exception.handleErrorResponse(_, res).end(next))
+});
 
+// get path between start and dest with process information
+router.get('/pathp', (req, res, next) => {
+  
+  const start = 'start' in req.query ? req.query.start : 'unknown#NN';
+  const dest = 'dest' in req.query ? req.query.dest : 'unknown#NN';
+  const topk = ('topk' in req.query ? parseInt(req.query.topk) : 200) + 1;
+  const dtname = 'dt' in req.query ? req.query.dt : 'unspecified';
+
+  let startedwriting = false;
+  Promise.resolve(true)
+    .then(_ => {
+      res.header('Content-Type', 'application/json; charset=utf-8');
+      res.write('[');
+    })
+    .then(_ => dt_db.get_dt(dtname))
+    .then(dt => paths.dijkstra(
+      start, 
+      dest, 
+      node => dt_db.get_neighbors_sync(node, 1, topk, dt), 
+      (node, cost) => {
+        logger.debug(`processing '${node}' (${cost}).`)
+        if (startedwriting)
+          res.write(',\n');
+        res.write(JSON.stringify({node: node, cost: cost}, null, 2));
+        startedwriting = true;
+      })
+    )
+    .then(r => {
+      if (startedwriting)
+          res.write(',\n');
+      res.write(JSON.stringify({
+        path: r.path,
+        distance: r.path.map(u => r.costs[u]),
+        subgraph: Object.keys(r.parents).length
+      }, null, 2));
+      res.end(']\n', next);
+    })
+    .catch(err => {
+      logger.error(err);
+      res.write(JSON.stringify(`Could not retrieve result: '${err.message}'`));
+      res.end(']\n', next);
+    });
 });
 
 module.exports = router;
