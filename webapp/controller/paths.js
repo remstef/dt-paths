@@ -47,8 +47,11 @@ module.exports.dijkstra = async function(start, dest, neighbors) {
 
   while (node) {
     // this is only for the queue since in this stupid datastructure can be enqued with different priorities :/
-    if(processed.has(node))
+    if(processed.has(node)){
+      node = pq.dequeue();
       continue;
+    }
+      
 
     const cost = costs[node];
     logger.debug(`processing '${node}' (${cost}).`);

@@ -14,6 +14,7 @@
     "express": "^4.17.1",
     "google-closure-library": "^20201006.0.0",
     "mysql": "^2.18.1",
+    "mysql2": "^2.2.5",
     "node-cleanup": "^2.1.2",
     "pino": "^6.7.0",
     "pino-pretty": "^4.3.0"

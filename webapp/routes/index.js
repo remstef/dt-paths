@@ -2,11 +2,12 @@
 
 const
   express = require('express'),
-  db = require('../controller/db'),
+  dt_db = require('../controller/dt_db'),
   paths = require('../controller/paths'),
   Exception = require('../model/Exception').model,
   logger = require('../controller/log')(module);
 
+dt_db.init()
 
 const router = express.Router();
 
@@ -14,9 +15,11 @@ const router = express.Router();
 
 // show available DTs
 router.get('/dt', (req, res, next) => {
-  db.get_dbs()
-    .then(_ => res.json(_))
-    .catch(_ => Exception.handleErrorResponse(_, res).end(next))
+  dt_db.get_dt_statuses()
+    .then(
+      _ => res.json(_),
+      _ => Exception.handleErrorResponse(_, res).end(next)
+      );
 });
 
 // get similar items
@@ -25,6 +28,7 @@ router.get('/sim', (req, res, next) => {
   const query = 'q' in req.query ? req.query.q : 'unknown#NN';
   const limit = 'limit' in req.query ? parseInt(req.query.limit) : undefined;
   const offset = 'offset' in req.query ? parseInt(req.query.offset) : undefined;
+  const dtname = 'dt' in req.query ? req.query.dt : 'unspecified';
 
   let startedwriting = false;
   Promise.resolve(true)
@@ -32,7 +36,7 @@ router.get('/sim', (req, res, next) => {
       res.header('Content-Type', 'application/json; charset=utf-8');
       res.write('[');
     })
-    .then(_ => db.get_neighbors_async (
+    .then(_ => dt_db.get_neighbors_async (
       query,
       item => {
         if (startedwriting)
@@ -43,9 +47,8 @@ router.get('/sim', (req, res, next) => {
       offset,
       limit
     ))
-    .then(ack => {
+    .then(() => {
       res.end(']', next);
-      ack();
     })
     .catch(err => {
       logger.error(err);
@@ -58,12 +61,13 @@ router.get('/sim', (req, res, next) => {
 // get path between start and dest
 router.get('/path', (req, res, next) => {
   
-  var start = 'start' in req.query ? req.query.start : 'unknown#NN';
-  var dest = 'dest' in req.query ? req.query.dest : 'unknown#NN';
-  var topk = ('topk' in req.query ? parseInt(req.query.topk) : 200) + 1;
+  const start = 'start' in req.query ? req.query.start : 'unknown#NN';
+  const dest = 'dest' in req.query ? req.query.dest : 'unknown#NN';
+  const topk = ('topk' in req.query ? parseInt(req.query.topk) : 200) + 1;
+  const dtname = 'dt' in req.query ? req.query.dt : 'unspecified';
   
-  Promise.resolve(true)
-    .then(_ => paths.dijkstra(start, dest, node => db.get_neighbors_sync(node, 1, topk) ))
+  dt_db.get_dt(dtname)
+    .then(dt => paths.dijkstra(start, dest, node => dt_db.get_neighbors_sync(node, 1, topk, dt) ))
     .then(_ => res.json({
       path: _.path,
       distance: _.path.map(u => _.costs[u]),

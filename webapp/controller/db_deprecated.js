@@ -136,7 +136,7 @@ async function testconnection(poolname) {
   });
 }
 
-function close(callback) {
+function close(callback = () => { }) {
   pools.forEach(e => {
     const name = e.name, pool = e.instance;
     pool.end(function (err) {
