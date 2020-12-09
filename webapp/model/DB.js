@@ -58,8 +58,11 @@ DB.prototype.query_async_promise = async function(query, values, cbfields, cbite
       else resolve(connection);
     })
   }).then(conn => new Promise((resolve, reject) => {
-    const result_fun = !force_item_pause ? row => cbitem(row, () => {}) : row => { conn.pause(); cbitem(row, () => conn.resume()); };
-    // Pausing the connnection is useful if your processing involves I/O
+    const result_fun = !force_item_pause ? 
+      row => cbitem(row, () => {}) : 
+      row => { conn.pause(); cbitem(row, () => conn.resume()); };
+
+    // Pausing the connnection is useful if processing involves I/O
     conn.query({ sql: query, values: values})
       .on('error', reject)
       .on('fields', cbfields)
@@ -91,106 +94,3 @@ DB.prototype.status = function() {
 }
 
 module.exports.model = DB;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/**
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- */
-// DB.prototype.withConnection = function(callback) {
-//   logger.trace(`Using connection from '${this.name}'.`);
-//   this.poolinstance.getConnection(function (err, connection) {
-//     if (err) callback(Exception.fromError(err, `Could not establish connection to database ${this.name}.`), null);
-//     else callback(null, connection);
-//   });
-// }
-
-// DB.prototype.query = function(query, values, callback){
-//   this.withConnection(function(err, connection){
-//     if (err) 
-//       callback(err);
-//     else 
-//       connection.query({ sql: query, values: values }, function(err, rows, fields){
-//         connection.release();
-//         callback(err, rows, fields);
-//       });
-//   });
-// }
-
-// DB.prototype.query_promise = function(query, values){
-//   return new Promise((resolve, reject) => {
-//     this.query(query, values, function(err, rows, fields) {
-//       if(err) reject(err);
-//       else resolve({ rows: rows, fields: fields });
-//     });
-//   }); 
-// }
-
-// DB.prototype.close_promise = function() {
-//   return new Promise((resolve, reject) => {
-//     this.close(function(err){
-//       if(err) reject(err)
-//       else resolve();
-//     });
-//   });
-// }
-
-// DB.prototype.test = function(callback) {
-//   this.query('select 1+1 as solution', [], function(err, rows, fields){
-//     if(err) {
-//       this.isavailable = false;
-//       callback(err);
-//     } else {
-//       if(rows[0][1] != 1) {
-//         this.isavailable = false;
-//         callback(new Exception('IllegalState', `Connection ${this.name} might be faulty, 'SELECT 1+1;' is '${res.rows}' but should be '2'. Integrity cannot be guaranteed.`));
-//       }
-//       else {
-//         this.isavailable = true;
-//         callback(null);
-//       }
-//     }
-//   });
-// }
-
-// DB.prototype.test_now = async function() {
-//   this.isavailable = await this.query_promise('select 1+1 as solution', [])
-//     .then(
-//       res => {
-//         console.log(res)
-//         if(results[0].solution != 2) Promise.reject(new Exception('IllegalState', `Connection ${this.name} might be faulty, 'SELECT 1+1;' is '${res.rows}' but should be '2'. Integrity cannot be guaranteed.`));
-//         else Promise.resolve();
-//       },
-//       err => Promise.reject(err)
-//     ).then(
-//       res => true,
-//       err => false
-//     );
-//   console.log(this.isavailable);
-// }
-
