@@ -97,13 +97,14 @@ router.get('/pathp', (req, res, next) => {
       res.header('Content-Type', 'application/json; charset=utf-8');
       res.write('[');
     })
+    .then(console.time(`path::${start}--${dest}`))
     .then(_ => dt_db.get_dt(dtname))
     .then(dt => paths.dijkstra(
       start, 
       dest, 
       node => dt_db.get_neighbors_sync(node, 1, topk, dt), 
       (node, cost) => {
-        logger.debug(`processing '${node}' (${cost}).`)
+        // logger.debug(`processing '${node}' (${cost}).`)
         if (startedwriting)
           res.write(',\n');
         res.write(JSON.stringify({node: node, cost: cost}, null, 2));
@@ -124,7 +125,8 @@ router.get('/pathp', (req, res, next) => {
       logger.error(err);
       res.write(JSON.stringify(`Could not retrieve result: '${err.message}'`));
       res.end(']\n', next);
-    });
+    })
+    .then(_ => console.timeEnd(`path::${start}--${dest}`));
 });
 
 module.exports = router;
