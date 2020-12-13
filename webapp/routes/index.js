@@ -97,7 +97,7 @@ router.get('/pathp', (req, res, next) => {
   Promise.resolve(true)
     .then(_ => {
       res.header('Content-Type', 'application/json; charset=utf-8');
-      res.write('[');
+      res.write('[\n');
     })
     .then(console.time(`path::${start}--${dest}`))
     .then(_ => dt_db.get_dt(dtname))
@@ -109,7 +109,7 @@ router.get('/pathp', (req, res, next) => {
         // logger.debug(`processing '${node}' (${cost}).`)
         if (startedwriting)
           res.write(',\n');
-        res.write(JSON.stringify({node: node, cost: cost}, null, 2));
+        res.write(JSON.stringify({node: node, cost: cost}));
         startedwriting = true;
       })
     )
@@ -118,10 +118,10 @@ router.get('/pathp', (req, res, next) => {
           res.write(',\n');
       res.write(JSON.stringify({
         path: r.path,
-        distance: r.path.map(u => r.costs[u]),
+        distances: r.path.map(u => r.costs[u]),
         subgraph: Object.keys(r.parents).length
-      }, null, 2));
-      res.end(']\n', next);
+      }));
+      res.end('\n]\n', next);
     })
     .catch(err => {
       logger.error(err);

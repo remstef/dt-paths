@@ -92,6 +92,6 @@ services:
       - LOGLEVEL=trace
       - LOGBUFFER=false
       - MYSQL_CONNECTIONSTRINGS=
-        default=mysql://root:root@host.docker.internal:13306/DT_CC_depnemwe?debug=false&connectionLimit=150&multipleStatements=true
-        nondefault=mysql://root:root@host.docker.internal:13306/DT_CC_depnemwe?debug=false&connectionLimit=150&multipleStatements=true
+        ccdep=mysql://root:root@host.docker.internal:13306/DT_CC_depnemwe?debug=false&connectionLimit=150&multipleStatements=true
+        otherccdep=mysql://root:root@host.docker.internal:13306/DT_CC_depnemwe?debug=false&connectionLimit=150&multipleStatements=true
   # END: webapp server bash development
