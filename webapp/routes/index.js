@@ -79,7 +79,8 @@ router.get('/path', (req, res, next) => {
     )
     .then(_ => res.json({
       path: _.path,
-      distance: _.path.map(u => _.costs[u]),
+      distances: _.path.map((u, i) => i > 0 ? _.costs[u] : 0),
+      weights: _.path.map((v,i) => i > 0 ? _.weights[ [_.path[i-1], v] ] : [ 0, 0]),
       subgraph: Object.keys(_.parents).length
     }))
     .catch(_ => Exception.handleErrorResponse(_, res).end(next))
@@ -116,7 +117,7 @@ router.get('/pathp', (req, res, next) => {
     )
     .then(r => {
       if (startedwriting)
-          res.write(',\n');
+        res.write(',\n');
       res.write(JSON.stringify({
         path: r.path,
         distances: r.path.map((u, i) => i > 0 ? r.costs[u] : 0),
