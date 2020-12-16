@@ -99,7 +99,8 @@ router.get('/pathp', (req, res, next) => {
       res.header('Content-Type', 'application/json; charset=utf-8');
       res.write('[\n');
     })
-    .then(console.time(`path::${start}--${dest}`))
+    .then(_ => logger.info(`computing path: ${start}-->${dest} (${dtname}, ${topk-1})`))
+    .then(_ => console.time(`path::${start}--${dest}`))
     .then(_ => dt_db.get_dt(dtname))
     .then(dt => paths.dijkstra(
       start, 
@@ -118,7 +119,8 @@ router.get('/pathp', (req, res, next) => {
           res.write(',\n');
       res.write(JSON.stringify({
         path: r.path,
-        distances: r.path.map(u => r.costs[u]),
+        distances: r.path.map((u, i) => i > 0 ? r.costs[u] : 0),
+        weights: r.path.map((v,i) => i > 0 ? r.weights[ [r.path[i-1], v] ] : [ 0, 0]),
         subgraph: Object.keys(r.parents).length
       }));
       res.end('\n]\n', next);

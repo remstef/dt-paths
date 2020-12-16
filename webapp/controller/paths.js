@@ -23,6 +23,7 @@ function lowestCostNode(costs, processed) {
 
 module.exports.dijkstra = async function(start, dest, neighbors, callback) {
   const costs = { };
+  const weights = { };
   const minhops = { };
   const pq = new goog.structs.PriorityQueue();
 
@@ -64,6 +65,7 @@ module.exports.dijkstra = async function(start, dest, neighbors, callback) {
       .then(_ => _.forEach(neigh => {
         if ( !costs[neigh.name] )
           i++;
+        weights[ [node, neigh.name] ] = [neigh.rank, neigh.weight];
         const newcost = i; // i cost + 1; neigh.weight; neigh.rank;
         if ( !costs[neigh.name] || costs[neigh.name] > newcost) {  
           pq.enqueue(newcost, neigh.name);
@@ -76,7 +78,6 @@ module.exports.dijkstra = async function(start, dest, neighbors, callback) {
         if (neigh.name === dest) {
           stop = true;
         }
-          
       }));
       
     processed.add(node)
@@ -107,6 +108,7 @@ module.exports.dijkstra = async function(start, dest, neighbors, callback) {
       distance: costs[dest],
       path: path,
       costs: costs,
+      weights: weights,
       processed: processed,
       parents: parents
     };
@@ -115,6 +117,7 @@ module.exports.dijkstra = async function(start, dest, neighbors, callback) {
       distance: costs[dest],
       path: [ ],
       costs: costs,
+      weights: weights,
       processed: processed,
       parents: parents
     };
