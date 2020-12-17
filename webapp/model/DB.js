@@ -72,7 +72,6 @@ DB.prototype.query_async_promise = async function(query, values, cbfields, cbite
         resolve();
       });
   }));
-  
 }
 
 DB.prototype.test = async function() {
